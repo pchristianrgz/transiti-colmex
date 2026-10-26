@@ -1,0 +1,14 @@
+{
+  "name": "bus-roma-pcm",
+  "version": "1.0.0",
+  "description": "Pantalla informativa buses Roma PCM",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "gtfs-realtime-bindings": "^0.0.5",
+    "node-fetch": "^2.6.9"
+  }
+}

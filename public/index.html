@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transiti Bus - Info Point PCM</title>
+  <style>
+    :root {
+      --pcm-burgundy: #7A2E35;
+      --pcm-burgundy-glow: rgba(122, 46, 53, 0.45);
+      --pcm-gold: #e0a943;
+      --pcm-gold-soft: #f4d085;
+      --bg-dark: #0a0d14;
+      
+      --glass-surface: rgba(22, 28, 42, 0.55);
+      --glass-border: rgba(255, 255, 255, 0.12);
+      --glass-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.5), 0 0 1px 1px rgba(255, 255, 255, 0.08) inset;
+      
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --eta-normal: #34d399;
+      --eta-imminent: var(--pcm-gold);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    ::-webkit-scrollbar { display: none; }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+      height: 100vh;
+      width: 100vw;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 56px 44px;
+      overflow: hidden;
+      user-select: none;
+      -webkit-user-select: none;
+      cursor: none;
+      position: relative;
+    }
+
+    .ambient-glow-1 {
+      position: absolute;
+      width: 650px;
+      height: 650px;
+      top: -150px;
+      right: -150px;
+      background: radial-gradient(circle, var(--pcm-burgundy-glow) 0%, rgba(12, 15, 23, 0) 70%);
+      filter: blur(80px);
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .ambient-glow-2 {
+      position: absolute;
+      width: 550px;
+      height: 550px;
+      bottom: -100px;
+      left: -120px;
+      background: radial-gradient(circle, rgba(224, 169, 67, 0.15) 0%, rgba(12, 15, 23, 0) 70%);
+      filter: blur(90px);
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    header {
+      z-index: 1;
+      background: var(--glass-surface);
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
+      border: 1px solid var(--glass-border);
+      border-radius: 24px;
+      padding: 24px 34px;
+      box-shadow: var(--glass-shadow);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: relative;
+    }
+
+    header::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 30px;
+      right: 30px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.25), transparent);
+    }
+
+    .header-titles h1 {
+      font-size: 2.6rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .header-subtitle {
+      font-size: 1.25rem;
+      color: var(--pcm-gold-soft);
+      margin-top: 4px;
+      font-weight: 500;
+    }
+
+    .header-right {
+      text-align: right;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+    }
+
+    .weather-info {
+      font-size: 1.25rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+      margin-bottom: 2px;
+    }
+
+    .clock {
+      font-size: 3.8rem;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      color: var(--text-primary);
+      line-height: 1;
+    }
+
+    .date-str {
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      text-transform: capitalize;
+      margin-top: 4px;
+    }
+
+    main {
+      z-index: 1;
+      flex: 1;
+      margin: 28px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .card {
+      background: var(--glass-surface);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      padding: 20px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: var(--glass-shadow);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 20px;
+      right: 20px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    }
+
+    .card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .route-group {
+      display: flex;
+      align-items: center;
+      gap: 22px;
+    }
+
+    .badge {
+      background: linear-gradient(135deg, rgba(122, 46, 53, 0.95), rgba(70, 24, 29, 0.85));
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #ffffff;
+      font-size: 2.8rem;
+      font-weight: 800;
+      padding: 4px 18px;
+      border-radius: 14px;
+      min-width: 130px;
+      text-align: center;
+      box-shadow: 0 8px 20px -4px rgba(122, 46, 53, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.3);
+      letter-spacing: -0.02em;
+    }
+
+    .info-col {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .dest-title {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.01em;
+    }
+
+    .stop-subinfo {
+      font-size: 1.15rem;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .eta {
+      font-size: 3.2rem;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      color: var(--eta-normal);
+      text-align: right;
+      min-width: 160px;
+      text-shadow: 0 0 20px rgba(52, 211, 153, 0.35);
+    }
+
+    .eta.imminent {
+      color: var(--eta-imminent);
+      text-shadow: 0 0 20px rgba(224, 169, 67, 0.45);
+      animation: pulse 1.8s infinite alternate ease-in-out;
+    }
+
+    .time-bar-bg {
+      width: 100%;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .time-bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      background: var(--eta-normal);
+      box-shadow: 0 0 10px rgba(52, 211, 153, 0.5);
+      transition: width 0.8s ease, background-color 0.8s ease;
+    }
+
+    .time-bar-fill.imminent {
+      background: var(--pcm-gold);
+      box-shadow: 0 0 10px rgba(224, 169, 67, 0.6);
+    }
+
+    @keyframes pulse {
+      from { opacity: 0.82; }
+      to { opacity: 1; }
+    }
+
+    .empty-state {
+      margin: auto;
+      text-align: center;
+      font-size: 1.8rem;
+      color: var(--text-muted);
+    }
+
+    footer {
+      z-index: 1;
+      background: var(--glass-surface);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      padding: 16px 28px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 1.05rem;
+      color: var(--text-secondary);
+      box-shadow: var(--glass-shadow);
+    }
+
+    .dot-live {
+      display: inline-block;
+      width: 9px;
+      height: 9px;
+      background-color: var(--eta-normal);
+      border-radius: 50%;
+      margin-right: 6px;
+      box-shadow: 0 0 8px var(--eta-normal);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="ambient-glow-1"></div>
+  <div class="ambient-glow-2"></div>
+
+  <header>
+    <div class="header-titles">
+      <h1>Prossimi Transiti</h1>
+      <div class="header-subtitle">
+        <span>Fermate limitrofe Casaletto & Monteverde</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="weather-info" id="live-weather">Roma • --°C</div>
+      <div class="clock" id="live-clock">--:--</div>
+      <div class="date-str" id="live-date">--</div>
+    </div>
+  </header>
+
+  <main id="arrivals-container">
+    <div class="empty-state">Ricerca transiti in tempo reale...</div>
+  </main>
+
+  <footer>
+    <span><span class="dot-live"></span>GTFS-Realtime Roma Mobilità</span>
+    <span id="sync-time">In attesa...</span>
+  </footer>
+
+  <script>
+    function updateClockAndDate() {
+      const now = new Date();
+      document.getElementById("live-clock").textContent = 
+        now.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
+
+      const options = { weekday: 'long', day: 'numeric', month: 'long' };
+      document.getElementById("live-date").textContent = 
+        now.toLocaleDateString("it-IT", options);
+    }
+    setInterval(updateClockAndDate, 1000);
+    updateClockAndDate();
+
+    async function updateWeather() {
+      try {
+        const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=41.86&longitude=12.44&current=temperature_2m,weather_code');
+        const data = await res.json();
+        const temp = Math.round(data.current.temperature_2m);
+        document.getElementById("live-weather").textContent = `Roma • ${temp}°C`;
+      } catch (e) {
+        document.getElementById("live-weather").textContent = `Roma`;
+      }
+    }
+    updateWeather();
+    setInterval(updateWeather, 15 * 60 * 1000);
+
+    function getWalkingTime(stopName) {
+      if (stopName.includes("Casaletto / Alessandri")) return "🚶 2 min";
+      if (stopName.includes("Colli Portuensi")) return "🚶 3 min";
+      if (stopName.includes("Gianicolense")) return "🚶 5 min";
+      return "🚶 Vicina";
+    }
+
+    async function fetchArrivals() {
+      const container = document.getElementById("arrivals-container");
+      const syncTime = document.getElementById("sync-time");
+
+      try {
+        const response = await fetch('/api/arrivals');
+        const data = await response.json();
+
+        syncTime.textContent = `Aggiornato: ${new Date().toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}`;
+
+        if (!data || data.length === 0) {
+          container.innerHTML = '<div class="empty-state">Nessun autobus programmato nei prossimi minuti</div>';
+          return;
+        }
+
+        container.innerHTML = data.slice(0, 7).map(item => {
+          const isImminent = item.minutes <= 2;
+          const etaText = item.minutes === 0 ? "In arrivo" : `${item.minutes} min`;
+          const walkInfo = getWalkingTime(item.stopName);
+          const progressPercent = Math.max(5, Math.min(100, 100 - (item.minutes * 5)));
+
+          return `
+            <div class="card">
+              <div class="card-top">
+                <div class="route-group">
+                  <div class="badge">${item.route}</div>
+                  <div class="info-col">
+                    <div class="dest-title">${item.destination}</div>
+                    <div class="stop-subinfo">
+                      <span>🚏 ${item.stopName}</span>
+                      <span>•</span>
+                      <span>${walkInfo}</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="eta ${isImminent ? 'imminent' : ''}">${etaText}</div>
+              </div>
+              <div class="time-bar-bg">
+                <div class="time-bar-fill ${isImminent ? 'imminent' : ''}" style="width: ${progressPercent}%;"></div>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+      } catch (err) {
+        console.error("Errore sincronizzazione:", err);
+      }
+    }
+
+    fetchArrivals();
+    setInterval(fetchArrivals, 15000);
+
+    setTimeout(() => {
+      window.location.reload();
+    }, 3 * 60 * 60 * 1000);
+  </script>
+</body>
+</html>
